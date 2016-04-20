@@ -56,13 +56,15 @@ angular.module('<%= app.name %>')
      * @param {Number=} [id] The id of the resource.
      * @param {String=} [query] The query string to append.
      * @param {Object=} [data] The data to post with the request.
+     * @param {Object=} [headers] The headers to post with the request.
      * @returns {*}
      */
-    var callApi = function(type, resourceName, id, query, data) {
+    var callApi = function(type, resourceName, id, query, data, headers) {
       return $http({
         method: type,
         url: buildUrl(resourceName, id, query),
-        data: data
+        data: data,
+        headers : headers
       });
     };
 
@@ -100,7 +102,7 @@ angular.module('<%= app.name %>')
        * @returns {Object} The promise object which made the request.
        */
       get: function(resourceName, id, query) {
-        return callApi('GET', resourceName, id, query);
+        return callApi('GET', resourceName, id, query, null);
       },
 
       /**
@@ -110,8 +112,8 @@ angular.module('<%= app.name %>')
        * @param {Object} data The object to post with the request.
        * @returns {Object} The promise object which made the request.
        */
-      post: function(resourceName, data) {
-        return callApi('POST', resourceName, null, null, data);
+      post: function(resourceName, data, headers) {
+        return callApi('POST', resourceName, null, null, data, headers);
       },
 
       /**
@@ -122,8 +124,8 @@ angular.module('<%= app.name %>')
        * @param {Object} data The object to post with the request.
        * @returns {Object} The promise object which made the request.
        */
-      put: function(resourceName, id, data) {
-        return callApi('PUT', resourceName, id, null, data);
+      put: function(resourceName, id, data, headers) {
+        return callApi('PUT', resourceName, id, null, data, headers);
       },
 
       /**
@@ -134,7 +136,7 @@ angular.module('<%= app.name %>')
        * @returns {Object} The promise object which made the request.
        */
       delete: function(resourceName, id) {
-        return callApi('DELETE', resourceName, id);
+        return callApi('DELETE', resourceName, id, null);
       }
     };
   }];
