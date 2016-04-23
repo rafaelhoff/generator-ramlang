@@ -23,7 +23,14 @@ var Generator = module.exports = function Generator() {
   // Register options
   this.option('save', {
     desc: 'Stores all answers to a file.',
-    required: false
+    required: false,
+    type: "String"
+  });
+
+  this.option('file', {
+    desc: 'Reads an specific configuration file.',
+    required: false,
+    type: "String"
   });
 
   this.option('clean', {
@@ -47,7 +54,7 @@ var Generator = module.exports = function Generator() {
   var filePath = path.resolve('.'); // current working directory.
 
   this.ramlFiles = (fs.readdirSync(filePath) || []).filter(function(item) {
-    return path.extname(item).indexOf('.raml') > -1;
+    return path.extname(item).endsWith('.raml');
   });
 
   this.ramlFiles.push('Custom');
@@ -59,8 +66,13 @@ util.inherits(Generator, yeoman.generators.Base);
  * Loads the config file if there is one.
  */
 Generator.prototype.config = function() {
+  if (this.options.save && this.options.file) {
+    console.log("--save and --file cannot be provided at the same time.");
+    process.exit(1);
+  }
   // Initialise the yeoman config for this generator
-  this.config.path = './.ramlang';
+  this.config.path = (this.options.save && typeof this.options.save === "string") ? this.options.save : 
+                     (this.options.file && typeof this.options.file === "string") ? this.options.file : './.ramlang';
   this.config.loadConfig();
 
   // load up any saved configurations if the user hasn't provided the 'clean' argument
@@ -72,6 +84,11 @@ Generator.prototype.config = function() {
     this.filesDist          = this.config.get('destination');
     this.options.force      = this.config.get('force');
     this.mediaTypeExtension = this.config.get('mediaTypeExtension');
+  }
+  else {
+    if (this.options.file) {
+      console.log("Configuration file: "+this.options.file+" not found.");
+    }
   }
 };
 /**
@@ -163,7 +180,7 @@ Generator.prototype.initialQuestions = function () {
     }.bind(this));
   } else {
     done();
-  }
+  }  
 };
 
 /**
@@ -185,7 +202,7 @@ Generator.prototype.readRamlFile = function() {
   var isHttp = this.ramlFilename.indexOf('http://') === 0;
   var isHttps = this.ramlFilename.indexOf('https://') === 0;
   var isUri = isHttp || isHttps;
-  util.print(chalk.blue('Reading RAML file'));
+  console.log(chalk.blue('Reading RAML file'));
 
   var progressInterval;
 
@@ -210,7 +227,7 @@ Generator.prototype.readRamlFile = function() {
   var loadRaml = function() {
     ramlParser.loadFile(self.ramlFilename)
       .then(function(data) {
-        util.print(chalk.green(' ✔\n'));
+        console.log(chalk.green(' ✔\n'));
         self.log(); // add new line
         self.ramlSpecObj = data;
       })
@@ -240,7 +257,7 @@ Generator.prototype.readRamlFile = function() {
     saveFilePath = path.basename(saveFilePath);
 
     progressInterval = setInterval(function() {
-      util.print('.');
+      console.log('.');
     }, 100);
 
     var file = fs.createWriteStream(saveFilePath);
@@ -412,13 +429,13 @@ Generator.prototype.generate = function() {
   };
 
   var appTemplateText = application.generate(moduleName, this.ramlSpecObj);
-  var providerTemplateText = provider.generate(moduleName, this.ramlSpecObj, !this.generateInOneFile);
+  var providerTemplateText = provider.generate(this.apiModuleName, this.ramlSpecObj, !this.generateInOneFile);
 
   this.writeTemplateToDest(moduleName, appTemplateText);
   this.writeTemplateToDest('api-provider', providerTemplateText);
 
   this.selectedResourceObjs.forEach(function(resource) {
-    var serviceTemplateText = service.generate(moduleName, resource, !this.generateInOneFile, this.mediaTypeExtension);
+    var serviceTemplateText = service.generate(this.apiModuleName, resource, !this.generateInOneFile, this.mediaTypeExtension);
     this.writeTemplateToDest(resource.displayName, serviceTemplateText);
   }, this);
 
