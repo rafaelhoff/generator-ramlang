@@ -62,9 +62,10 @@ angular.module('<%= app.name %>')
     var callApi = function(type, resourceName, id, query, data, headers) {
       return $http({
         method: type,
-        url: buildUrl(resourceName, id, query),
+        url: buildUrl(resourceName, id, typeof query === 'string' ? query : undefined),
         data: data,
-        headers : headers
+        headers: headers,
+        params: (typeof query === 'object' ? query : undefined)
       });
     };
 
