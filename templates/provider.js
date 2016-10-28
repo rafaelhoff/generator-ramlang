@@ -1,153 +1,167 @@
-angular.module('<%= app.name %>')
-
-/**
- * This provider is used as the main interface for communicating with RESTful web resources.
- */
-.provider('<%= app.module %>', function() {
-  var self = this;
-  var baseApiUrl = null;
-  var suffix = '';
+  angular.module('<%= app.name %>')
 
   /**
-   * Sets the base api url. This value must lead with a '/'
-   *
-   * @param {String} url The value to set as the base api url
+   * This provider is used as the main interface for communicating with RESTful web resources.
    */
-  self.setApiBaseUrl = function(url) {
+  .provider('<%= app.module %>', function() {
+    var self = this;
+    var baseApiUrl = null;
+    var suffix = '';
 
-    if (angular.isString(url)) {
-      var cleanUrl = angular.copy(url);
-      var match = cleanUrl.match(/(http|https):\/\//i);
-      var httpPrefix = 'http://';
-
-      if (match && match.length > 0) {
-        httpPrefix = match[0];
-      }
-
-      cleanUrl = cleanUrl.replace(httpPrefix, '');
-      cleanUrl = cleanUrl.replace(/\/+/g, '/');
-      cleanUrl = cleanUrl.split('/');
-
-      // remove all of the last entries if they are empty string.
-      while(cleanUrl.length > 0 && cleanUrl[cleanUrl.length - 1] === '') {
-        cleanUrl.pop();
-      }
-
-      baseApiUrl = httpPrefix + cleanUrl.join('/');
+    /**
+     * Clean the Api Base Url.
+     */
+    self.cleanApiBaseUrl = function() {
+      baseApiUrl = '';
     }
-  };
-
-  /**
-   * Sets the value of the suffix to append to the end of the url before making the request.
-   *
-   * @param {String} value The value the set the suffix of the request url.
-   */
-  self.setRequestSuffix = function(value) {
-    suffix = value;
-  };
-
-  self.$get = ['$http', function($http) {
 
     /**
-     * Main method that calls the api
+     * Sets the base api url. This value must lead with a '/'
      *
-     * @param {String} type The HTTP verb to use. eg: GET, POST, PUT, DELETE
-     * @param {String} resourceName The name of the resource to calls
-     * @param {Number=} [id] The id of the resource.
-     * @param {String=} [query] The query string to append.
-     * @param {Object=} [data] The data to post with the request.
-     * @param {Object=} [headers] The headers to post with the request.
-     * @returns {*}
+     * @param {String} url The value to set as the base api url
      */
-    var callApi = function(type, resourceName, id, query, data, headers) {
-      return $http({
-        method: type,
-        url: buildUrl(resourceName, id, typeof query === 'string' ? query : undefined),
-        data: data,
-        headers: headers,
-        params: (typeof query === 'object' ? query : undefined)
-      });
+    self.setApiBaseUrl = function(url, normalize) {
+      if (normalize === undefined)
+        normalize = true;
+
+      if (angular.isString(url)) {
+        if (normalize) {
+          var cleanUrl = angular.copy(url);
+          var match = cleanUrl.match(/(http|https):\/\//i);
+          var httpPrefix = 'http://';
+
+          if (match && match.length > 0) {
+            httpPrefix = match[0];
+          }
+
+          cleanUrl = cleanUrl.replace(httpPrefix, '');
+          cleanUrl = cleanUrl.replace(/\/+/g, '/');
+          cleanUrl = cleanUrl.split('/');
+
+          // remove all of the last entries if they are empty string.
+          while(cleanUrl.length > 0 && cleanUrl[cleanUrl.length - 1] === '') {
+            cleanUrl.pop();
+          }
+
+          baseApiUrl = httpPrefix + cleanUrl.join('/');
+        }
+        else {
+          baseApiUrl = url;
+        }
+      }
     };
 
     /**
-     * Constructs the request url to call using the base api url and resource data provided.
+     * Sets the value of the suffix to append to the end of the url before making the request.
      *
-     * @param {String} resourcePath The relative path of the resource.
-     * @param {Number=} [id] The id of the resource.
-     * @param {String=} [query] The query string to append.
-     * @returns {string} The complete url to request.
+     * @param {String} value The value the set the suffix of the request url.
      */
-    var buildUrl = function(resourcePath, id, query) {
-
-      // If the resource path doesn't start with a '/' then prefix it.
-      if (resourcePath.indexOf('/') !== 0) {
-        resourcePath = '/' + resourcePath;
-      }
-
-      var parts = [resourcePath];
-
-      if (angular.isDefined(id) && id !== null) {
-        parts.push(id);
-      }
-
-      return baseApiUrl + parts.join('/') + suffix + (query ? query : '');
+    self.setRequestSuffix = function(value) {
+      suffix = value;
     };
 
-    return {
+    self.$get = ['$http', function($http) {
+
       /**
-       * Calls the api with the get http verb.
+       * Main method that calls the api
        *
-       * @param {String} resourceName The name of the resource to call.
+       * @param {String} type The HTTP verb to use. eg: GET, POST, PUT, DELETE
+       * @param {String} resourceName The name of the resource to calls
        * @param {Number=} [id] The id of the resource.
        * @param {String=} [query] The query string to append.
-       * @returns {Object} The promise object which made the request.
+       * @param {Object=} [data] The data to post with the request.
+       * @param {Object=} [headers] The headers to post with the request.
+       * @returns {*}
        */
-      get: function(resourceName, id, query) {
-        return callApi('GET', resourceName, id, query, null);
-      },
+      var callApi = function(type, resourceName, id, query, data, headers) {
+        return $http({
+          method: type,
+          url: buildUrl(resourceName, id, typeof query === 'string' ? query : undefined),
+          data: data,
+          headers: headers,
+          params: (typeof query === 'object' ? query : undefined)
+        });
+      };
 
       /**
-       * Calls the api with the post http verb sending the data object provided with the request.
+       * Constructs the request url to call using the base api url and resource data provided.
        *
-       * @param {String} resourceName The name of the resource to call.
-       * @param {Object} data The object to post with the request.
-       * @returns {Object} The promise object which made the request.
+       * @param {String} resourcePath The relative path of the resource.
+       * @param {Number=} [id] The id of the resource.
+       * @param {String=} [query] The query string to append.
+       * @returns {string} The complete url to request.
        */
-      post: function(resourceName, data, headers) {
-        return callApi('POST', resourceName, null, null, data, headers);
-      },
+      var buildUrl = function(resourcePath, id, query) {
 
-      /**
-       * Calls the api with the put http verb sending the data object provided with the request.
-       *
-       * @param {String} resourceName The name of the resource to call.
-       * @param {Number} id The id of the resource.
-       * @param {Object} data The object to post with the request.
-       * @returns {Object} The promise object which made the request.
-       */
-      put: function(resourceName, id, data, headers) {
-        return callApi('PUT', resourceName, id, null, data, headers);
-      },
+        // If the resource path doesn't start with a '/' then prefix it.
+        if (resourcePath.indexOf('/') !== 0) {
+          resourcePath = '/' + resourcePath;
+        }
 
-      /**
-       * Calls the api with the delete http verb.
-       *
-       * @param {String} resourceName The name of the resource to call.
-       * @param {Number=} id The id of the resource.
-       * @returns {Object} The promise object which made the request.
-       */
-      delete: function(resourceName, id) {
-        return callApi('DELETE', resourceName, id, null);
-      }
-    };
-  }];
+        var parts = [resourcePath];
 
-  return self;
-})<% if (!_.isUndefined(app.baseUri) && !_.isNull(app.baseUri)) { %>
+        if (angular.isDefined(id) && id !== null) {
+          parts.push(id);
+        }
 
-/**
- * Sets up the api base url.
- */
-.config(['<%= app.module %>Provider', function(<%= app.module %>Provider) {
-  <%= app.module %>Provider.setApiBaseUrl('<%= app.baseUri %>');
-}])<% } %>
+        return baseApiUrl + parts.join('/') + suffix + (query ? query : '');
+      };
+
+      return {
+        /**
+         * Calls the api with the get http verb.
+         *
+         * @param {String} resourceName The name of the resource to call.
+         * @param {Number=} [id] The id of the resource.
+         * @param {String=} [query] The query string to append.
+         * @returns {Object} The promise object which made the request.
+         */
+        get: function(resourceName, id, query) {
+          return callApi('GET', resourceName, id, query, null);
+        },
+
+        /**
+         * Calls the api with the post http verb sending the data object provided with the request.
+         *
+         * @param {String} resourceName The name of the resource to call.
+         * @param {Object} data The object to post with the request.
+         * @returns {Object} The promise object which made the request.
+         */
+        post: function(resourceName, data, headers) {
+          return callApi('POST', resourceName, null, null, data, headers);
+        },
+
+        /**
+         * Calls the api with the put http verb sending the data object provided with the request.
+         *
+         * @param {String} resourceName The name of the resource to call.
+         * @param {Number} id The id of the resource.
+         * @param {Object} data The object to post with the request.
+         * @returns {Object} The promise object which made the request.
+         */
+        put: function(resourceName, id, data, headers) {
+          return callApi('PUT', resourceName, id, null, data, headers);
+        },
+
+        /**
+         * Calls the api with the delete http verb.
+         *
+         * @param {String} resourceName The name of the resource to call.
+         * @param {Number=} id The id of the resource.
+         * @returns {Object} The promise object which made the request.
+         */
+        delete: function(resourceName, id) {
+          return callApi('DELETE', resourceName, id, null);
+        }
+      };
+    }];
+
+    return self;
+  })<% if (!_.isUndefined(app.baseUri) && !_.isNull(app.baseUri)) { %>
+
+  /**
+   * Sets up the api base url.
+   */
+  .config(['<%= app.module %>Provider', function(<%= app.module %>Provider) {
+    <%= app.module %>Provider.setApiBaseUrl('<%= app.baseUri %>');
+  }])<% } %>

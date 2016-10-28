@@ -409,7 +409,7 @@ Generator.prototype.generate = function() {
 
   this.conflicter.force = this.options.force;
 
-  var fileContents = '\'use strict\';\n\n';
+  var fileContents = '(function () {\n  "use strict";\n\n';
   var moduleName = this.apiModuleName + (this.apiModuleName != 'api' ? '-api' : '');
 
   /**
@@ -440,7 +440,7 @@ Generator.prototype.generate = function() {
   }, this);
 
   if (this.generateInOneFile) {
-    fileContents += ';';
+    fileContents += ';\n}());';
     this.write(path.join(this.filesDist, moduleName + '.js'), fileContents);
   }
 

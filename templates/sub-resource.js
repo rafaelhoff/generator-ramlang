@@ -1,4 +1,4 @@
-
-<%= resource.description %>
-<%= resource.name %>: {
-<%= resource.methods %>
+  
+  <%= resource.description %>
+  <%= resource.name %>: {
+  <%= resource.methods %>
