@@ -377,12 +377,23 @@ Generator.prototype.finalQuestions = function() {
 
   if (prompts.length > 0) {
     this.prompt(prompts, function (props) {
-      this.selectedResources = props.resourcesToGenerate || this.allResourceDisplayNames;
-      this.generateInOneFile = props.allInOneFile;
-      this.filesDist = (props.filesDist || filesDist).trim();
+      // Update data only for the ones that had prompts.
+
+      if (!this.selectedResources)
+        this.selectedResources = props.resourcesToGenerate || this.allResourceDisplayNames;
+      
+      if (!this.generateInOneFile)
+        this.generateInOneFile = props.allInOneFile;
+      
+      if (!this.filesDist)
+        this.filesDist = (props.filesDist || filesDist).trim();
+
       this.ramlSpecObj.resources = utils.filterResources(this.selectedResources, this.ramlSpecObj.resources);
       this.selectedResourceObjs = this.ramlSpecObj.resources;
-      this.mediaTypeExtension = '.' + props.mediaTypeExtension;
+      
+      if (!this.mediaTypeExtension)
+        this.mediaTypeExtension = '.' + props.mediaTypeExtension;
+
       done();
     }.bind(this));
   } else {
