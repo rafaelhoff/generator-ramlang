@@ -13,7 +13,7 @@
      */
     self.cleanApiBaseUrl = function() {
       baseApiUrl = '';
-    }
+    };
 
     /**
      * Sets the base api url. This value must lead with a '/'

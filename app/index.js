@@ -420,7 +420,7 @@ Generator.prototype.generate = function() {
 
   this.conflicter.force = this.options.force;
 
-  var fileContents = '(function () {\n  "use strict";\n\n';
+  var fileContents = '(function () {\n  \'use strict\';\n\n';
   var moduleName = this.apiModuleName + (this.apiModuleName != 'api' ? '-api' : '');
 
   /**
